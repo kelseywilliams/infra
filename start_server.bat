@@ -3,7 +3,8 @@
 set CLUSTER=droplet
 set NS=droplet
 set CONFIG=k3d-config.local.yaml
-set SEALED=overlays\local\secrets\postgres-secrets.sealed.yaml
+set POSTGRES_SEALED=overlays\local\secrets\postgres-secrets.sealed.yaml
+set REDIS_SEALED=overlays\local\secrets\redis-secrets.sealed.yaml
 set CONTROLLER=https://github.com/bitnami-labs/sealed-secrets/releases/download/v0.37.0/controller.yaml
 
 k3d cluster list | findstr /b /c:"%CLUSTER%"
@@ -24,15 +25,20 @@ kubectl -n kube-system rollout status deployment/sealed-secrets-controller --tim
 
 kubectl apply -f base/namespace.yaml
 
-if not exist "%SEALED%" (
-    echo %SEALED% does not exist.  Running seal.bat
+if not exist "%POSTGRES_SEALED%" (
+    echo %POSTGRES_SEALED% does not exist.  Running seal.bat
+    call seal.bat
+)
+if not exist "%REDIS_SEALED%" (
+    echo %REDIS_SEALED% does not exist.  Running seal.bat
     call seal.bat
 )
 
 echo Applying seals
-kubectl apply -f "%SEALED%"
-
+kubectl apply -f "%POSTGRES_SEALED%"
+kubectl apply -f "%REDIS_SEALED%"
 
 kubectl apply -k base/postgres
+kubectl apply -k base/redis
 
 echo ************* Server start complete *************
