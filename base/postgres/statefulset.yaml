@@ -1,0 +1,100 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  namespace: droplet
+  labels:
+    app.kubernetes.io/name: postgres
+    app.kubernetes.io/part-of: droplet
+    app.kubernetes.io/component: database
+spec:
+  serviceName: postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: postgres
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: postgres
+        app.kubernetes.io/part-of: droplet
+        app.kubernetes.io/component: database
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 70        # postgres uid in the alpine image (Debian uses 999)
+        fsGroup: 70          # grants the pod group ownership of the mounted volume
+      containers:
+        - name: postgres
+          image: postgres:15-alpine
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          ports:
+            - name: postgres
+              containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: apidb
+            - name: POSTGRES_USER
+              value: admin
+            - name: POSTGRES_PASSWORD_FILE
+              value: /etc/secrets/admin_pwd
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+            - name: POSTGRES_INITDB_ARGS
+              value: "--auth-host=scram-sha-256 --auth-local=scram-sha-256"
+          # Keep the official image's entrypoint (it runs the init scripts);
+          # only pass extra args. config_file pulls in pg_hba.conf via hba_file.
+          args: ["-c", "config_file=/etc/postgresql/postgresql.conf"]
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+            - name: postgres-config
+              mountPath: /etc/postgresql/postgresql.conf
+              subPath: postgresql.conf
+            - name: postgres-config
+              mountPath: /etc/postgresql/pg_hba.conf
+              subPath: pg_hba.conf
+            - name: postgres-config
+              mountPath: /docker-entrypoint-initdb.d/01-init.sql
+              subPath: 01-init.sql
+            - name: postgres-config
+              mountPath: /docker-entrypoint-initdb.d/01-init-roles.sh
+              subPath: 01-init-roles.sh
+            - name: postgres-secrets
+              mountPath: /etc/secrets
+              readOnly: true
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "admin", "-d", "apidb"]
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 5
+          livenessProbe:
+            exec:
+              command: ["pg_isready", "-U", "admin", "-d", "apidb"]
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 5
+      volumes:
+        - name: postgres-config
+          configMap:
+            name: postgres-config
+            defaultMode: 0755    # 01-init-roles.sh must be executable
+        - name: postgres-secrets
+          secret:
+            secretName: postgres-secrets
+        - name: postgres-data
+          persistentVolumeClaim:
+            claimName: postgres-pvc

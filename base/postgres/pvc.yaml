@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+  namespace: droplet
+  labels:
+    app.kubernetes.io/name: postgres
+    app.kubernetes.io/part-of: droplet
+    app.kubernetes.io/component: database
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  # No storageClassName set on purpose: both k3d and your prod k3d server
+  # default to "local-path", which dynamically provisions the underlying
+  # PersistentVolume for you. Set it explicitly only if you move to a
+  # cloud provider with a named StorageClass (e.g. gp2, standard).
