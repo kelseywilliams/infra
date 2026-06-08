@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: redis-pvc
+  namespace: droplet
+  labels:
+    app.kubernetes.io/name: redis
+    app.kubernetes.io/part-of: droplet
+    app.kubernetes.io/component: cache
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+  # No storageClassName: uses k3d's default "local-path" provisioner,
+  # same as postgres. Set explicitly only on a cloud StorageClass.
