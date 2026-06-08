@@ -4,7 +4,7 @@ kind: Simple # internally, we also have a Cluster config, which is not yet avail
 metadata:
   name: droplet # name that you want to give to your cluster (will still be prefixed with `k3d-`)
 servers: 1 # same as `--servers 1`
-agents: 2 # same as `--agents 2`
+agents: 1 # single droplet: every node is a container on the same host, so keep nodes minimal
 kubeAPI: # same as `--api-port myhost.my.domain:6445` (where the name would resolve to 127.0.0.1)
   host: "localhost" # important for the `server` setting in the kubeconfig
   hostIP: "127.0.0.1" # where the Kubernetes API will be listening on
@@ -33,8 +33,13 @@ options:
       - arg: "--disable=traefik"
         nodeFilters:
           - server:*
-      # TODO FIX THIS 
-      # - arg: "--tls-san=YOUR_SERVER_IP"   # lets kubectl connect from outside
+      # The API stays on 127.0.0.1 (see kubeAPI above): manage the cluster by
+      # SSHing into the droplet, where the kubeconfig is local. This keeps the
+      # Kubernetes API off the public internet.
+      # ONLY if you need kubectl from outside the droplet (e.g. remote CI),
+      # uncomment and set the droplet's public IP/domain so the API cert is
+      # valid for it:
+      # - arg: "--tls-san=DROPLET_PUBLIC_IP"
       #   nodeFilters:
       #     - server:*
   kubeconfig:
