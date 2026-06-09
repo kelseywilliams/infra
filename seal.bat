@@ -9,8 +9,6 @@ set REDIS_SEALED=%OUT%\redis-secrets.sealed.yaml
 
 echo Sealing postgres secrets...
 
-if not exist "%OUT%" mkdir "%OUT%"
-
 kubectl create secret generic postgres-secrets --namespace=%NS% ^
     --from-file=admin_pwd=%POSTGRES_PLAIN%\admin_pwd ^
     --from-file=worker_pwd=%POSTGRES_PLAIN%\worker_pwd ^

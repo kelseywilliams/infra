@@ -8,8 +8,6 @@ POSTGRES_SEALED=$OUT/postgres-secrets.sealed.yaml
 REDIS_PLAIN=base/redis/secrets/plaintext
 REDIS_SEALED=$OUT/redis-secrets.sealed.yaml
 
-mkdir -p "$OUT"
-
 echo "Sealing postgres secrets..."
 kubectl create secret generic postgres-secrets --namespace=$NS \
     --from-file=admin_pwd=$POSTGRES_PLAIN/admin_pwd \

@@ -1,0 +1,24 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: droplet
+
+# Production overlay: the environment-agnostic base services plus THIS cluster's
+# sealed secrets. Deploy with:  kubectl apply -k overlays/prod
+#
+# The sealed secrets below must be sealed against the prod cluster's own key
+# (seal.sh runs against the prod controller on the droplet) BEFORE this builds.
+resources:
+  - ../../base
+  - secrets/postgres-secrets.sealed.yaml
+  - secrets/redis-secrets.sealed.yaml
+
+# Prod-only overrides go here, e.g. sizing for the droplet's RAM:
+# patches:
+#   - target:
+#       kind: StatefulSet
+#       name: postgres
+#     patch: |-
+#       - op: replace
+#         path: /spec/template/spec/containers/0/resources/limits/memory
+#         value: 1Gi
