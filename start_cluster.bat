@@ -6,11 +6,13 @@ set CONTROLLER=https://github.com/bitnami-labs/sealed-secrets/releases/download/
 
 k3d cluster list | findstr /b /c:"%CLUSTER%" >nul
 if errorlevel 1 (
+    echo Creating cluster %CLUSTER%...
     k3d cluster create --config %CONFIG%
     kubectl apply -f %CONTROLLER%
     kubectl -n kube-system rollout status deployment/sealed-secrets-controller --timeout=120s
     call seal.bat
 ) else (
+    echo Starting cluster %CLUSTER%...
     k3d cluster start %CLUSTER%
 )
 
