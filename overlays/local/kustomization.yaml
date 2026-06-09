@@ -1,0 +1,11 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: droplet
+
+# Local overlay: the environment-agnostic base services plus this cluster's
+# sealed secrets. Deploy with:  kubectl apply -k overlays/local
+resources:
+  - ../../base
+  - secrets/postgres-secrets.sealed.yaml
+  - secrets/redis-secrets.sealed.yaml
