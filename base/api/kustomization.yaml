@@ -1,0 +1,20 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: droplet
+
+resources:
+  - deployment.yaml
+  - service.yaml
+
+# Non-secret runtime config -> api-config ConfigMap (consumed via envFrom).
+# PORT and TOKEN_EXPIRY_MINS are environment-agnostic; API_DOMAIN and DOMAIN are
+# local-oriented defaults — override them with a patch in the prod overlay.
+# (ADMIN/USER are NOT here — they're authorization secrets, sealed into api-secrets.)
+configMapGenerator:
+  - name: api-config
+    literals:
+      - PORT=3028
+      - TOKEN_EXPIRY_MINS=20
+      - API_DOMAIN=api:3028
+      - DOMAIN=localhost

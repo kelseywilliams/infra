@@ -10,6 +10,7 @@ if errorlevel 1 (
     k3d cluster create --config %CONFIG%
     kubectl apply -f %CONTROLLER%
     kubectl -n kube-system rollout status deployment/sealed-secrets-controller --timeout=120s
+    del /q overlays\local\secrets\*.sealed.yaml
     call seal.bat
 ) else (
     echo Starting cluster %CLUSTER%...
