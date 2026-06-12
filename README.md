@@ -2,9 +2,11 @@
 ### Dependencies
 `docker` `k3d` `kubectl` `kubeseal`
 ### Secrets
-In order to manage secrets like pwds, ACLs, and other sensitive info, a `secrets/plaintext` is to be created in the apps base folder, e.g. `base/postgres/secrets/plaintext`.  The required secrets are visible in the seal scripts.  The seal scripts take the secret files in the `secrets/plaintext` folder of each app in the `base` folder and creates a generic secret with it then uses kubeseal to create a yaml with the encrypted secrets which is safe for git tracking.  _Note that the secrets are signed to the cluster meaning that the keys must be regenerated for each cluster. Using the start and delete scripts outlined below is the recommended way to manage the cluster since they handle seals and seal cleanup._
+In order to manage secrets like passwords, ACLs, and other sensitive info, a `secrets/plaintext` is to be created in the apps base folder, e.i. `base/postgres/secrets/plaintext`.  The required secrets are visible in the seal scripts.  The seal scripts take the secret files in the `secrets/plaintext` folder of each app in the `base` folder and creates a generic secret which it pipes to kubeseal to create a YAML with the encrypted secrets that is stored to either the `overlays/local/secrets` or `overlays/prod/secrets` depending on if the batch or shell was run respectively.  These YAML's with the encrypted secrets are safe for git tracking.  _Note that the secrets are signed to the cluster meaning that the keys must be regenerated for each cluster. Using the start and delete scripts outlined below is the recommended way to manage the cluster since they handle seals and seal cleanup._
 ### Scripts
 To bring up a cluster, you can use the start cluster scripts.  These scripts check if the cluster named droplet exists or not and either starts it or creates it and seals the secrets in the latter case.  In order to stop the cluster, use k3d command `k3d cluster stop droplet`. To delete the cluster, use the delete cluster scripts in order to properly remove sealed secrets signed by that cluster.
+Batch scripts write to `overlays/local`, designed for development environment.
+Bash scripts write to `overlays/prod`, designed for production environment.
 
 _FAILURE TO USE START AND DELETE SCRIPTS MAY CAUSE SEALED SECRETS TO NOT BE MANAGED PROPERLY.  This will cause pods to hang on creation and other unexpected behavior._
 
