@@ -1,0 +1,106 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: droplet
+  labels:
+    app.kubernetes.io/name: api
+    app.kubernetes.io/part-of: droplet
+    app.kubernetes.io/component: backend
+spec:
+  # Stateless HTTP service -> Deployment (not a StatefulSet). No PVC: logs go to stdout.
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: api
+        app.kubernetes.io/part-of: droplet
+        app.kubernetes.io/component: backend
+    spec:
+      # The API talks only to Postgres/Redis, never the Kubernetes API, so it needs no SA token.
+      # Leaving it on also breaks container creation: the projected token mounts under
+      # /var/run/secrets/... (= /run/secrets/... via symlink), which collides with our read-only
+      # api-secrets volume at /run/secrets, so runc can't mkdir the mountpoint.
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000      # the `node` user in the official node image
+        runAsGroup: 1000
+        fsGroup: 1000        # makes the mounted secret files group-readable by the node user
+      # The GHCR package is private by default. If you don't make it public, create a
+      # docker-registry secret named `regcred` in this namespace and uncomment:
+      # imagePullSecrets:
+      #   - name: regcred
+      containers:
+        - name: api
+          # TODO(phase 1): pin to an immutable tag (e.g. :sha-<short> from CI) instead of :latest.
+          image: ghcr.io/kelseywilliams/api.kelseywilliams.co:main
+          imagePullPolicy: Always
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true   # app writes nothing to disk (stdout logging); /tmp is an emptyDir
+            capabilities:
+              drop: ["ALL"]
+          ports:
+            - name: http
+              containerPort: 3028
+          # Non-secret runtime config (PORT, TOKEN_EXPIRY_MINS, API_DOMAIN, DOMAIN).
+          envFrom:
+            - configMapRef:
+                name: api-config
+          # ADMIN/USER gate authorization, so they live in the sealed secret and are
+          # injected as env vars (config/index.js reads them from process.env). Setting
+          # USER here also overrides any OS-provided $USER inside the container.
+          env:
+            - name: ADMIN
+              valueFrom:
+                secretKeyRef:
+                  name: api-secrets
+                  key: ADMIN
+            - name: USER
+              valueFrom:
+                secretKeyRef:
+                  name: api-secrets
+                  key: USER
+          volumeMounts:
+            # The remaining secrets are read as files from /run/secrets/* (unchanged from compose).
+            - name: api-secrets
+              mountPath: /run/secrets
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+          # NOTE: probes require the phase-0 endpoints (GET /healthz, GET /readyz).
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 5
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 5
+      volumes:
+        - name: api-secrets
+          secret:
+            secretName: api-secrets
+        - name: tmp
+          emptyDir: {}
+      # Give in-flight requests + pg/redis disconnect time to drain on SIGTERM (phase-0 shutdown).
+      terminationGracePeriodSeconds: 30

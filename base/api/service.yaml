@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: api
+  namespace: droplet
+  labels:
+    app.kubernetes.io/name: api
+    app.kubernetes.io/part-of: droplet
+    app.kubernetes.io/component: backend
+spec:
+  # Normal ClusterIP (load-balanced across replicas), unlike the headless postgres/redis
+  # services. The in-cluster proxy reaches this as http://api:3028.
+  selector:
+    app.kubernetes.io/name: api
+  ports:
+    - name: http
+      port: 3028
+      targetPort: http

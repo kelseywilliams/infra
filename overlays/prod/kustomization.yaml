@@ -12,6 +12,7 @@ resources:
   - ../../base
   - secrets/postgres-secrets.sealed.yaml
   - secrets/redis-secrets.sealed.yaml
+  - secrets/api-secrets.sealed.yaml
 
 # Prod-only overrides go here, e.g. sizing for the droplet's RAM:
 # patches:
