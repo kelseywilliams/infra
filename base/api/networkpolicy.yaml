@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: api-allow-gateway
+  namespace: droplet
+  labels:
+    app.kubernetes.io/name: api
+    app.kubernetes.io/part-of: droplet
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: api
+  policyTypes:
+    - Ingress
+  ingress:
+    # The Envoy Gateway data-plane pods run in the envoy-gateway-system namespace; allow them
+    # to reach the api on 3028. Without this, default-deny-ingress drops gateway->api traffic
+    # and Envoy reports "upstream connect error / remote connection failure". This is the rule
+    # we deferred in #7 ("api gets an allow rule when the Gateway lands").
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: envoy-gateway-system
+      ports:
+        - protocol: TCP
+          port: 3028

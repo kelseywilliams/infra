@@ -6,6 +6,7 @@ namespace: droplet
 resources:
   - deployment.yaml
   - service.yaml
+  - networkpolicy.yaml
 
 # Non-secret runtime config -> api-config ConfigMap (consumed via envFrom).
 # PORT and TOKEN_EXPIRY_MINS are environment-agnostic; API_DOMAIN and DOMAIN are
