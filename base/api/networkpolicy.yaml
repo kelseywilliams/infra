@@ -15,8 +15,7 @@ spec:
   ingress:
     # The Envoy Gateway data-plane pods run in the envoy-gateway-system namespace; allow them
     # to reach the api on 3028. Without this, default-deny-ingress drops gateway->api traffic
-    # and Envoy reports "upstream connect error / remote connection failure". This is the rule
-    # we deferred in #7 ("api gets an allow rule when the Gateway lands").
+    # and Envoy reports "upstream connect error / remote connection failure"
     - from:
         - namespaceSelector:
             matchLabels:
