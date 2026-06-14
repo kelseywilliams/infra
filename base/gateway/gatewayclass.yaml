@@ -1,0 +1,9 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: envoy
+  labels:
+    app.kubernetes.io/part-of: droplet
+spec:
+  # Binds this class to the Envoy Gateway controller installed by the start script.
+  controllerName: gateway.envoyproxy.io/gatewayclass-controller
