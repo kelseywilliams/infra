@@ -1,0 +1,34 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: droplet-gateway
+  namespace: droplet
+  labels:
+    app.kubernetes.io/part-of: droplet
+  annotations:
+    # cert-manager gateway-shim: auto-create a Certificate for each TLS listener below,
+    # solved via the Issuer named here. Start on STAGING to avoid Let's Encrypt prod rate
+    # limits; flip to letsencrypt-prod once a staging cert issues cleanly end-to-end.
+    cert-manager.io/issuer: letsencrypt-staging
+spec:
+  gatewayClassName: envoy
+  listeners:
+    # Plain HTTP: serves ACME HTTP-01 challenges and redirects everything else to HTTPS.
+    - name: http
+      protocol: HTTP
+      port: 80
+      allowedRoutes:
+        namespaces:
+          from: Same
+    # TLS termination for the api subdomain. cert-manager fills the `api-tls` secret.
+    - name: https-api
+      protocol: HTTPS
+      port: 443
+      hostname: api.kelseywilliams.co
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: api-tls
+      allowedRoutes:
+        namespaces:
+          from: Same

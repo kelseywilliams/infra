@@ -13,6 +13,8 @@ resources:
   - secrets/postgres-secrets.sealed.yaml
   - secrets/redis-secrets.sealed.yaml
   - secrets/api-secrets.sealed.yaml
+  # Prod routing: host-based (api.kelseywilliams.co) + TLS via cert-manager.
+  - gateway
 
 # Prod-only overrides go here, e.g. sizing for the droplet's RAM:
 # patches:
