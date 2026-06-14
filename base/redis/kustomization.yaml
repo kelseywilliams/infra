@@ -7,6 +7,7 @@ resources:
   - statefulset.yaml
   - service.yaml
   - pvc.yaml
+  - networkpolicy.yaml
 
 configMapGenerator:
   - name: redis-config

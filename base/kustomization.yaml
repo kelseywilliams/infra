@@ -5,6 +5,7 @@ kind: Kustomization
 # Overlays reference this whole directory:  ../../base
 resources:
   - namespace.yaml
+  - networkpolicy-default-deny.yaml
   - postgres
   - redis
   - api

@@ -1,0 +1,16 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: droplet
+  labels:
+    app.kubernetes.io/part-of: droplet
+spec:
+  # Selects every pod in the namespace and declares Ingress controlled with no allow rules,
+  # so all inbound is denied by default. Per-component policies (postgres/redis) add back the
+  # specific flows they need. Egress is intentionally NOT controlled here: DNS and
+  # api->postgres/redis outbound keep working. Locking egress is a separate, stricter phase
+  # (and that phase MUST add an explicit allow to kube-dns or it breaks all name resolution).
+  podSelector: {}
+  policyTypes:
+    - Ingress
