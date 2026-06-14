@@ -1,0 +1,42 @@
+# Let's Encrypt ACME issuers (HTTP-01, solved through the Gateway's :80 listener).
+# Namespaced Issuers (not ClusterIssuer) so the overlay's namespace transformer is happy and
+# the account keys live alongside the cert in `droplet`.
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: letsencrypt-staging
+  namespace: droplet
+  labels:
+    app.kubernetes.io/part-of: droplet
+spec:
+  acme:
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    privateKeySecretRef:
+      name: letsencrypt-staging-account
+    solvers:
+      - http01:
+          gatewayHTTPRoute:
+            parentRefs:
+              - name: droplet-gateway
+                namespace: droplet
+                kind: Gateway
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: letsencrypt-prod
+  namespace: droplet
+  labels:
+    app.kubernetes.io/part-of: droplet
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    privateKeySecretRef:
+      name: letsencrypt-prod-account
+    solvers:
+      - http01:
+          gatewayHTTPRoute:
+            parentRefs:
+              - name: droplet-gateway
+                namespace: droplet
+                kind: Gateway

@@ -1,0 +1,22 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: api-https-redirect
+  namespace: droplet
+  labels:
+    app.kubernetes.io/part-of: droplet
+spec:
+  parentRefs:
+    - name: droplet-gateway
+      sectionName: http
+  hostnames:
+    - api.kelseywilliams.co
+  rules:
+    # Redirect all plain HTTP to HTTPS (301). During issuance, cert-manager's ACME solver
+    # attaches its own, more-specific HTTPRoute for /.well-known/acme-challenge/* to this same
+    # :80 listener; exact-path match takes precedence, so challenges still succeed.
+    - filters:
+        - type: RequestRedirect
+          requestRedirect:
+            scheme: https
+            statusCode: 301

@@ -1,0 +1,24 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: api
+  namespace: droplet
+  labels:
+    app.kubernetes.io/name: api
+    app.kubernetes.io/part-of: droplet
+spec:
+  parentRefs:
+    - name: droplet-gateway
+      sectionName: https-api
+  hostnames:
+    - api.kelseywilliams.co
+  rules:
+    # Subdomain serves the api at the root (matches the prod.conf api.kelseywilliams.co vhost):
+    # api.kelseywilliams.co/auth/... -> api:3028/auth/...  (NO prefix strip, unlike local /api).
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: api
+          port: 3028

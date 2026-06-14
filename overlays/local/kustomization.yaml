@@ -10,3 +10,7 @@ resources:
   - secrets/postgres-secrets.sealed.yaml
   - secrets/redis-secrets.sealed.yaml
   - secrets/api-secrets.sealed.yaml
+  # Local routing: path-based (localhost/api/* -> api:3028). Prod uses host-based
+  # (api.kelseywilliams.co) in overlays/prod, authored in the TLS phase.
+  - gateway/gateway.yaml
+  - gateway/httproute-api.yaml
