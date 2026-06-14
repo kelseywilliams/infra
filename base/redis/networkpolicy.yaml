@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: redis-allow-api
+  namespace: droplet
+  labels:
+    app.kubernetes.io/name: redis
+    app.kubernetes.io/part-of: droplet
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: redis
+  policyTypes:
+    - Ingress
+  ingress:
+    # Only api pods may reach Redis on 6379 today. When chat migrates into the cluster,
+    # add a second podSelector here for app.kubernetes.io/name: chat (it has its own Redis
+    # ACL user). Everything else is denied by the namespace-wide default-deny-ingress.
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: api
+      ports:
+        - protocol: TCP
+          port: 6379
