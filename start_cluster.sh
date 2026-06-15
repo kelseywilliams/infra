@@ -16,9 +16,12 @@ else
     kubectl apply -f "$CONTROLLER"
     kubectl -n kube-system rollout status deployment/sealed-secrets-controller --timeout=120s
     echo Installing Envoy Gateway and cert-manager...
+    # Envoy Gateway FIRST, and wait for it before installing cert-manager: cert-manager only
+    # enables its Gateway API support (the gateway-shim that auto-creates Certificates, and the
+    # HTTP-01 gatewayHTTPRoute solver) if the Gateway API CRDs already exist when it starts.
     kubectl apply --server-side -f "https://github.com/envoyproxy/gateway/releases/download/$EG_VERSION/install.yaml"
-    kubectl apply -f "https://github.com/cert-manager/cert-manager/releases/download/$CM_VERSION/cert-manager.yaml"
     kubectl -n envoy-gateway-system wait --for=condition=Available --timeout=300s deployment --all
+    kubectl apply -f "https://github.com/cert-manager/cert-manager/releases/download/$CM_VERSION/cert-manager.yaml"
     kubectl -n cert-manager wait --for=condition=Available --timeout=300s deployment --all
     kubectl apply -f base/gateway/gatewayclass.yaml
     rm -f overlays/prod/secrets/*.sealed.yaml
